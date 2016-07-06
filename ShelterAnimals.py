@@ -114,7 +114,6 @@ if __name__ == "__main__":
     history = model.fit(train[0::, 1::], Y_train,
                         nb_epoch=1, batch_size=batch_size,
                         verbose=1, validation_split=0.1)
-
     print("Predicting... \n")
 
     predictions = model.predict_proba(test)
