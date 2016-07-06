@@ -15,7 +15,7 @@ def munge(data, train):
     if (train):
         data.drop(['AnimalID', 'OutcomeSubtype'], axis=1, inplace=True)
         data['OutcomeType'] = data['OutcomeType'].map(
-            {'Return_to_owner': 4, 'Euthanasia': 3, 'Adoption': 0, 'Transfer': 5, 'Died': 2})
+            {'Return_to_owner': 3, 'Euthanasia': 2, 'Adoption': 0, 'Transfer': 4, 'Died': 1})
 
     gender = {'Neutered Male': 1, 'Spayed Female': 2, 'Intact Male': 3, 'Intact Female': 4, 'Unknown': 5, np.nan: 0}
     data['SexuponOutcome'] = data['SexuponOutcome'].map(gender)
@@ -36,6 +36,7 @@ def munge(data, train):
 
     data['AgeInDays'] = data['AgeuponOutcome'].map(agetodays)
     data.loc[(data['AgeInDays'].isnull()), 'AgeInDays'] = data['AgeInDays'].median()
+    #data = data.dropna().median()
 
     data['Year'] = data['DateTime'].str[:4].astype(int)
     data['Month'] = data['DateTime'].str[5:7].astype(int)
@@ -69,7 +70,8 @@ if __name__ == "__main__":
     from keras.layers import Dense, Dropout, Activation, Lambda
     from keras.datasets import reuters
     from keras.models import Sequential
-    from keras.layers import Dense, Dropout, Activation
+    from keras.layers import Dense, Dropout, Activation, Flatten
+    from keras.layers import Convolution2D, MaxPooling2D, Convolution1D, MaxPooling1D, Reshape
     from keras.utils import np_utils
 
     print("Loading data...\n")
@@ -80,6 +82,7 @@ if __name__ == "__main__":
     pd_train = munge(pd_train, True)
     pd_test = munge(pd_test, False)
 
+    test_ids = pd_test['ID']
     pd_test.drop('ID', inplace=True, axis=1)
 
     train = pd_train.values
@@ -99,33 +102,68 @@ if __name__ == "__main__":
     batch_size = 32
     nb_epoch = 5
 
-    print('Building model...')
+    print(train)
+    train = train.reshape(train.shape + (1,))
+    print('Building model...', train[0::, 1::].shape)
     model = Sequential()
-    model.add(Dense(512, input_shape=(len(train[0::, 1::][0]),)))
+    model.add(Reshape(1, train[0::, 1::].shape[1], 26729))
+    model.add(Convolution1D(32, 3, border_mode='same',
+                            input_dim=train[0::, 1::].shape[1]))
+    model.add(Activation('relu'))
+    model.add(Convolution1D(32, 3))
+    model.add(Activation('relu'))
+    model.add(MaxPooling1D(pool_length=2))
+    model.add(Dropout(0.25))
+
+    model.add(Convolution1D(64, 3, border_mode='same'))
+    model.add(Activation('relu'))
+    model.add(Convolution1D(64, 3))
+    model.add(Activation('relu'))
+
+    from keras import backend as K
+    def max_1d(X):
+        return K.max(X, axis=1)
+
+
+    model.add(Lambda(max_1d, output_shape=(2,)))
+    model.add(Dropout(0.25))
+
+    #model.add(Flatten())
+    model.add(Dense(512))
     model.add(Activation('relu'))
     model.add(Dropout(0.5))
     model.add(Dense(nb_classes))
     model.add(Activation('softmax'))
 
+    #model.add(Dense(512, input_shape=(len(train[0::, 1::][0]),)))
+    #model.add(Activation('relu'))
+    #model.add(Dropout(0.5))
+    #model.add(Dense(nb_classes))
+    #model.add(Activation('softmax'))
+
+    print(model.summary())
     model.compile(loss='categorical_crossentropy',
                   optimizer='adam',
                   metrics=['accuracy'])
 
     history = model.fit(train[0::, 1::], Y_train,
                         nb_epoch=1, batch_size=batch_size,
-                        verbose=1, validation_split=0.1)
+                        verbose=1, validation_split=0.3)
     print("Predicting... \n")
 
     predictions = model.predict_proba(test)
-
-    #forest = RandomForestClassifier(n_estimators=400, max_features='auto')
+    print(predictions)
+    #forest = RandomForestClassifier(n_estimators=1, max_features='auto')
     #forest = forest.fit(train[0::, 1::], train[0::, 0])
     #predictions = forest.predict_proba(test)
 
-    output = pd.DataFrame(predictions, columns=['Adoption', 'Died', 'Euthanasia', 'Return_to_owner', 'Transfer'])
-    output.columns.names = ['ID']
-    output.index.names = ['ID']
-    output.index += 1
+    #print(test_ids)
+
+
+    output = pd.DataFrame(predictions, index=test_ids, columns=['Adoption', 'Died', 'Euthanasia', 'Return_to_owner', 'Transfer'])
+    #output.columns.names = ['ID']
+    #output.index.names = ['ID']
+    #output.index += 1
 
     print("Writing predictions.csv\n")
 
