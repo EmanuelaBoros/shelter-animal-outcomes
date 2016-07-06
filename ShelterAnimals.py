@@ -71,7 +71,7 @@ if __name__ == "__main__":
     from keras.datasets import reuters
     from keras.models import Sequential
     from keras.layers import Dense, Dropout, Activation, Flatten
-    from keras.layers import Convolution2D, MaxPooling2D, Convolution1D, MaxPooling1D, Reshape
+    from keras.layers import Convolution2D, MaxPooling2D, Convolution1D, MaxPooling1D, Embedding
     from keras.utils import np_utils
 
     print("Loading data...\n")
@@ -106,9 +106,13 @@ if __name__ == "__main__":
     train = train.reshape(train.shape + (1,))
     print('Building model...', train[0::, 1::].shape)
     model = Sequential()
-    model.add(Reshape(1, train[0::, 1::].shape[1], 26729))
-    model.add(Convolution1D(32, 3, border_mode='same',
-                            input_dim=train[0::, 1::].shape[1]))
+    model.add(Convolution1D(
+        nb_filter=32,
+        filter_length=3,
+        input_shape=(12, 1),  # Should this be 1 or 252?
+        input_length=26729,
+        activation='relu',
+        init='uniform'))
     model.add(Activation('relu'))
     model.add(Convolution1D(32, 3))
     model.add(Activation('relu'))
