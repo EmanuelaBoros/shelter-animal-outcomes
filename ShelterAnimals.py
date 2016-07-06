@@ -107,24 +107,24 @@ if __name__ == "__main__":
     print('Building model...', train[0::, 1::].shape)
     model = Sequential()
     model.add(Convolution1D(
-        nb_filter=32,
+        nb_filter=64,
         filter_length=3,
         input_shape=(12, 1),  # Should this be 1 or 252?
         input_length=26729,
-        activation='relu',
+        activation='tanh',
         init='uniform'))
-    model.add(Activation('relu'))
-    model.add(Convolution1D(32, 3))
-    model.add(Activation('relu'))
-    model.add(MaxPooling1D(pool_length=2))
-    model.add(Dropout(0.25))
-
-    model.add(Convolution1D(64, 3, border_mode='same'))
     model.add(Activation('relu'))
     model.add(Convolution1D(64, 3))
     model.add(Activation('relu'))
     model.add(MaxPooling1D(pool_length=2))
     model.add(Dropout(0.25))
+
+#    model.add(Convolution1D(128, 3, border_mode='same'))
+#    model.add(Activation('relu'))
+#    model.add(Convolution1D(128, 3))
+#    model.add(Activation('relu'))
+#    model.add(MaxPooling1D(pool_length=2))
+#    model.add(Dropout(0.25))
 
     model.add(Flatten())
     model.add(Dense(512))
@@ -135,11 +135,11 @@ if __name__ == "__main__":
 
     #print(model.summary())
     model.compile(loss='categorical_crossentropy',
-                  optimizer='adam',
+                  optimizer='sgd',
                   metrics=['accuracy'])
 
     history = model.fit(train[0::, 1::], Y_train,
-                        nb_epoch=10, batch_size=batch_size,
+                        nb_epoch=1000, batch_size=batch_size,
                         verbose=1, validation_split=0.3)
     print("Predicting... \n")
 
