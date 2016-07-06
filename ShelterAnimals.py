@@ -123,38 +123,27 @@ if __name__ == "__main__":
     model.add(Activation('relu'))
     model.add(Convolution1D(64, 3))
     model.add(Activation('relu'))
-
-    from keras import backend as K
-    def max_1d(X):
-        return K.max(X, axis=1)
-
-
-    model.add(Lambda(max_1d, output_shape=(2,)))
+    model.add(MaxPooling1D(pool_length=2))
     model.add(Dropout(0.25))
 
-    #model.add(Flatten())
+    model.add(Flatten())
     model.add(Dense(512))
     model.add(Activation('relu'))
     model.add(Dropout(0.5))
     model.add(Dense(nb_classes))
     model.add(Activation('softmax'))
 
-    #model.add(Dense(512, input_shape=(len(train[0::, 1::][0]),)))
-    #model.add(Activation('relu'))
-    #model.add(Dropout(0.5))
-    #model.add(Dense(nb_classes))
-    #model.add(Activation('softmax'))
-
-    print(model.summary())
+    #print(model.summary())
     model.compile(loss='categorical_crossentropy',
                   optimizer='adam',
                   metrics=['accuracy'])
 
     history = model.fit(train[0::, 1::], Y_train,
-                        nb_epoch=1, batch_size=batch_size,
+                        nb_epoch=10, batch_size=batch_size,
                         verbose=1, validation_split=0.3)
     print("Predicting... \n")
 
+    test = test.reshape(test.shape + (1,))
     predictions = model.predict_proba(test)
     print(predictions)
     #forest = RandomForestClassifier(n_estimators=1, max_features='auto')
