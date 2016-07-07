@@ -6,14 +6,28 @@ import sys
 from datetime import datetime
 
 
-def munge(data, train):
+def preprocess(data, isTrain):
     data['HasName'] = data['Name'].fillna(0)
     data.loc[data['HasName'] != 0, "HasName"] = 1
     data['HasName'] = data['HasName'].astype(int)
     data['AnimalType'] = data['AnimalType'].map({'Cat': 0, 'Dog': 1})
 
-    if (train):
+    if (isTrain):
         data.drop(['AnimalID', 'OutcomeSubtype'], axis=1, inplace=True)
+        import matplotlib
+        matplotlib.rcParams['backend'] = "Qt4Agg"
+        #matplotlib.use('TkAgg')
+        import matplotlib.pyplot as plt
+        import pylab
+        #for category in np.unique(data["OutcomeType"]):
+        #    print(category)
+        #    dfCategory = data[data["OutcomeType"] == category]
+        #    groups = dfCategory.groupby("Color")["OutcomeType"].count()
+        #    colors = np.unique(data['Color'][:100])
+        #    groups = groups[colors]
+        #    plt.figure()
+        #    groups.plot(kind="bar", title=category + " count by color")
+        #    pylab.show()
         data['OutcomeType'] = data['OutcomeType'].map(
             {'Return_to_owner': 3, 'Euthanasia': 2, 'Adoption': 0, 'Transfer': 4, 'Died': 1})
 
@@ -47,8 +61,23 @@ def munge(data, train):
     data['Name+Gender'] = data['HasName'] + data['SexuponOutcome']
     data['Type+Gender'] = data['AnimalType'] + data['SexuponOutcome']
     data['IsMix'] = data['Breed'].str.contains('mix', case=False).astype(int)
+    data['IsTerrier'] = data['Breed'].str.contains('Terrier', case=False).astype(int)
+    data['IsPoodle'] = data['Breed'].str.contains('Poodle', case=False).astype(int)
+    data['IsSchnauzer'] = data['Breed'].str.contains('Schnauzer', case=False).astype(int)
+    data['IsDomestic'] = data['Breed'].str.contains('Domestic', case=False).astype(int)
+    data['IsBulldog'] = data['Breed'].str.contains('Bulldog', case=False).astype(int)
+    data['IsAustralian'] = data['Breed'].str.contains('Australian', case=False).astype(int)
+    data['IsBeagle'] = data['Breed'].str.contains('Beagle', case=False).astype(int)
+    data['IsCollie'] = data['Breed'].str.contains('Collie', case=False).astype(int)
+    data['IsWelsh'] = data['Breed'].str.contains('Welsh', case=False).astype(int)
+    data['IsChihuahua'] = data['Breed'].str.contains('Chihuahua', case=False).astype(int)
+    data['IsCocker'] = data['Breed'].str.contains('Cocker', case=False).astype(int)
+    data['IsRetriever'] = data['Breed'].str.contains('Retriever', case=False).astype(int)
+    data['IsHusky'] = data['Breed'].str.contains('Husky', case=False).astype(int)
+    data['IsBlack'] = data['Breed'].str.contains('Black', case=False).astype(int)
+    data['IsWhite'] = data['Breed'].str.contains('White', case=False).astype(int)
 
-    return data.drop(['AgeuponOutcome', 'Name', 'Breed', 'Color', 'DateTime'], axis=1)
+    return data.drop(['AgeuponOutcome', 'Breed', 'Name', 'Color', 'DateTime'], axis=1)
 
 
 def best_params(data):
@@ -78,9 +107,9 @@ if __name__ == "__main__":
     pd_train = pd.read_csv(in_file_train)
     pd_test = pd.read_csv(in_file_test)
 
-    print("Munging data...\n")
-    pd_train = munge(pd_train, True)
-    pd_test = munge(pd_test, False)
+    print("Preprocess data...\n")
+    pd_train = preprocess(pd_train, True)
+    pd_test = preprocess(pd_test, False)
 
     test_ids = pd_test['ID']
     pd_test.drop('ID', inplace=True, axis=1)
@@ -96,6 +125,8 @@ if __name__ == "__main__":
 
     print('Convert class vector to binary class matrix (for use with categorical_crossentropy)')
     Y_train = np_utils.to_categorical(train[0::, 0], nb_classes)
+    #print(train[0::, 0])
+    #print(pd_train['OutcomeType'])
     #Y_test = np_utils.to_categorical(test, nb_classes)
     print('Y_train shape:', Y_train.shape)
     #print('Y_test shape:', Y_test.shape)
@@ -109,7 +140,7 @@ if __name__ == "__main__":
     model.add(Convolution1D(
         nb_filter=64,
         filter_length=3,
-        input_shape=(12, 1),  # Should this be 1 or 252?
+        input_shape=(27, 1),
         input_length=26729,
         activation='tanh',
         init='uniform'))
