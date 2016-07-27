@@ -150,12 +150,12 @@ if __name__ == "__main__":
     model.add(MaxPooling1D(pool_length=2))
     model.add(Dropout(0.25))
 
-#    model.add(Convolution1D(128, 3, border_mode='same'))
-#    model.add(Activation('relu'))
-#    model.add(Convolution1D(128, 3))
-#    model.add(Activation('relu'))
-#    model.add(MaxPooling1D(pool_length=2))
-#    model.add(Dropout(0.25))
+    model.add(Convolution1D(128, 3, border_mode='same'))
+    model.add(Activation('relu'))
+    model.add(Convolution1D(128, 3))
+    model.add(Activation('relu'))
+    model.add(MaxPooling1D(pool_length=2))
+    model.add(Dropout(0.25))
 
     model.add(Flatten())
     model.add(Dense(512))
@@ -170,7 +170,7 @@ if __name__ == "__main__":
                   metrics=['accuracy'])
 
     history = model.fit(train[0::, 1::], Y_train,
-                        nb_epoch=1000, batch_size=batch_size,
+                        nb_epoch=100, batch_size=batch_size,
                         verbose=1, validation_split=0.3)
     print("Predicting... \n")
 
